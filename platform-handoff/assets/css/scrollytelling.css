@@ -1,0 +1,1341 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Decode — Scrollytelling Article Page Styles
+   Scoped with .scrolly-* prefix to avoid collision with main styles.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ── 1. SCOPED CSS CUSTOM PROPERTIES ────────────────────────────────────── */
+
+:root {
+  /* Scrolly Dark Theme Colors */
+  --scrolly-bg:           #0a0a0a;
+  --scrolly-surface:      #141414;
+  --scrolly-surface-2:    #1e1e1e;
+  --scrolly-text:         #f3f0e0;
+  --scrolly-text-muted:   #888;
+  --scrolly-text-dim:     rgba(243, 240, 224, 0.55);
+  --scrolly-accent:       #D34135;
+  --scrolly-accent-glow:  rgba(211, 65, 53, 0.18);
+  --scrolly-border:       rgba(255, 255, 255, 0.08);
+
+  /* Typography — Instrument Sans only (Rule 4) */
+  --scrolly-font: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Layout */
+  --scrolly-max-text:   720px;
+  --scrolly-step-width: 390px;
+  --scrolly-toc-w:      300px;
+
+  /* UI chrome */
+  --scrolly-progress-h: 3px;
+
+  /* Animation */
+  --scrolly-ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+  --scrolly-transition:   0.45s var(--scrolly-ease-out);
+  --scrolly-transition-s: 0.25s ease;
+}
+
+
+/* ── 2. SCROLLY PAGE BODY OVERRIDES ─────────────────────────────────────── */
+/* Applied via body class or page-level scope */
+
+.scrolly-page {
+  background-color: var(--scrolly-bg);
+  color: var(--scrolly-text);
+  font-family: var(--scrolly-font);
+  overflow-x: clip;
+}
+
+.scrolly-page ::selection {
+  background: var(--scrolly-accent);
+  color: #fff;
+}
+
+
+/* ── 3. TOP READING PROGRESS BAR ────────────────────────────────────────── */
+
+.scrolly-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  height: var(--scrolly-progress-h);
+  width: 0%;
+  background: linear-gradient(90deg, var(--scrolly-accent) 0%, #f87171 100%);
+  transition: width 0.12s linear;
+  pointer-events: none;
+}
+
+
+/* ── 4. TOC BUTTON ──────────────────────────────────────────────────────── */
+
+.scrolly-toc-btn {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px 10px 14px;
+  background: var(--scrolly-accent);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-family: var(--scrolly-font);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 20px rgba(211, 65, 53, 0.45);
+  transition: background var(--scrolly-transition-s), transform var(--scrolly-transition-s), box-shadow var(--scrolly-transition-s);
+  cursor: pointer;
+}
+
+.scrolly-toc-btn:hover {
+  background: #b8302a;
+  box-shadow: 0 6px 28px rgba(211, 65, 53, 0.6);
+  transform: translateY(-50%) scale(1.04);
+}
+
+.scrolly-toc-btn svg {
+  flex-shrink: 0;
+}
+
+
+/* ── 5. SHARE BUTTON ────────────────────────────────────────────────────── */
+
+.scrolly-share-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 28px;
+  z-index: 600;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--scrolly-surface-2);
+  border: 1.5px solid var(--scrolly-accent);
+  border-radius: 50%;
+  color: var(--scrolly-accent);
+  box-shadow: 0 2px 12px rgba(211,65,53,0.3);
+  transition: color var(--scrolly-transition-s), background var(--scrolly-transition-s), transform var(--scrolly-transition-s), box-shadow var(--scrolly-transition-s);
+  cursor: pointer;
+}
+
+.scrolly-share-btn:hover {
+  background: var(--scrolly-accent);
+  color: #fff;
+  border-color: var(--scrolly-accent);
+  box-shadow: 0 4px 20px rgba(211,65,53,0.5);
+  transform: scale(1.08);
+}
+
+
+/* ── 6. TOC DRAWER + OVERLAY ────────────────────────────────────────────── */
+
+.scrolly-toc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 599;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--scrolly-transition);
+}
+
+.scrolly-toc-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.scrolly-toc-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 600;
+  width: var(--scrolly-toc-w);
+  /* Light theme — red-on-black was illegible */
+  background: #f4f3e9;
+  border-left: 1px solid #dddcd2;
+  transform: translateX(100%);
+  transition: transform var(--scrolly-transition);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.scrolly-toc-drawer.is-open {
+  transform: translateX(0);
+}
+
+.scrolly-toc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #dddcd2;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #D34135;
+}
+
+.scrolly-toc-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: #888;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.scrolly-toc-close:hover {
+  background: rgba(0,0,0,0.08);
+  color: #121212;
+}
+
+.scrolly-toc-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.scrolly-toc-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  background: none;
+  color: #555;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.scrolly-toc-item:hover {
+  background: rgba(0,0,0,0.04);
+  color: #121212;
+}
+
+.scrolly-toc-item:last-child {
+  border-bottom: none;
+}
+
+.scrolly-toc-item.is-active {
+  color: #121212;
+  background: rgba(211,65,53,0.06);
+}
+
+.scrolly-toc-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #D34135;
+  margin-bottom: 5px;
+}
+
+.scrolly-toc-heading {
+  display: block;
+  font-family: var(--scrolly-font);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #121212;
+}
+
+
+/* ── 7. HERO SECTION ────────────────────────────────────────────────────── */
+
+.scrolly-hero {
+  position: relative;
+  /* Match actual image ratio 1280×768 → zero cropping */
+  aspect-ratio: 1280 / 768;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-top: 80px;
+  overflow: hidden;
+  background: var(--scrolly-bg);
+}
+
+/* Mobile: let image show uncropped, content stacks below */
+@media (max-width: 767px) {
+  .scrolly-hero {
+    aspect-ratio: auto;
+    min-height: auto;
+    padding-top: 0;
+    overflow: visible;
+  }
+}
+
+/* Background image via <img> tag (Rule 1) */
+.scrolly-hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  will-change: transform;
+  animation: scrolly-hero-breathe 1.2s var(--scrolly-ease-out) both;
+}
+
+/* Mobile: pull image out of absolute flow so full image is visible */
+@media (max-width: 767px) {
+  .scrolly-hero-bg {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1280 / 768;
+    object-fit: fill;
+    margin-top: 64px; /* clear fixed navbar */
+    display: block;
+    animation: none;
+  }
+}
+
+
+/* Mobile: hide the full-screen overlay; hero-content stacks below image */
+@media (max-width: 767px) {
+  .scrolly-hero-overlay {
+    display: none;
+  }
+  .scrolly-hero-caption {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    display: block;
+    text-align: left;
+    padding: 6px 16px 0;
+    background: var(--scrolly-bg);
+  }
+  .scrolly-hero-content {
+    position: relative;
+    margin-top: 0;
+    padding: 28px 5vw 56px;
+    background: var(--scrolly-bg);
+    width: 100%;
+    max-width: 100%;
+  }
+  .scrolly-scroll-cue {
+    display: none; /* no room / not needed after stacked layout */
+  }
+}
+
+@keyframes scrolly-hero-breathe {
+  from { transform: scale(1.04); }
+  to   { transform: scale(1); }
+}
+
+/* Multi-stop gradient overlay for depth */
+.scrolly-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top,  rgba(10,10,10,0.96) 0%, rgba(10,10,10,0.65) 35%, rgba(10,10,10,0.2) 65%, rgba(10,10,10,0.1) 100%),
+    linear-gradient(to right, rgba(10,10,10,0.4) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.scrolly-hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 0 8vw 80px;
+  margin-top: auto; /* push to bottom, but never above the padding-top buffer */
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  max-width: 1100px;
+}
+
+/* Kicker / category label */
+.scrolly-kicker {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: var(--scrolly-accent);
+  margin-bottom: 12px;
+}
+
+/* Story headline */
+.scrolly-hero-title {
+  font-family: var(--scrolly-font);
+  font-size: clamp(28px, 4.2vw, 60px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--scrolly-text);
+  max-width: 22ch;
+  animation: scrolly-hero-fade-up 0.9s 0.2s var(--scrolly-ease-out) both;
+}
+
+/* Subtitle */
+.scrolly-hero-subtitle {
+  font-family: var(--scrolly-font);
+  font-size: clamp(16px, 2vw, 21px);
+  line-height: 1.65;
+  color: var(--scrolly-text-dim);
+  max-width: 55ch;
+  animation: scrolly-hero-fade-up 0.9s 0.35s var(--scrolly-ease-out) both;
+}
+
+/* Byline / meta row */
+.scrolly-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--scrolly-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  animation: scrolly-hero-fade-up 0.9s 0.5s var(--scrolly-ease-out) both;
+}
+
+/* Two-line meta layout */
+.scrolly-meta-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.scrolly-meta-authors {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 13px;
+  color: rgba(243,240,224,0.75);
+  font-family: var(--scrolly-font);
+}
+.scrolly-meta-author-link {
+  color: #f3f0e0;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(243,240,224,0.25);
+  padding-bottom: 1px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.scrolly-meta-author-link:hover {
+  color: var(--scrolly-accent);
+  border-color: var(--scrolly-accent);
+}
+.scrolly-meta-sep {
+  color: rgba(243,240,224,0.4);
+}
+.scrolly-meta-secondary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 12px;
+  color: var(--scrolly-text-muted);
+  font-family: var(--scrolly-font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Image credit caption */
+.scrolly-hero-caption {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-family: var(--scrolly-font);
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.04em;
+  z-index: 3;
+  text-align: right;
+  pointer-events: auto;
+}
+.scrolly-hero-caption a {
+  color: inherit;
+  text-decoration: none;
+}
+.scrolly-hero-caption a:hover {
+  color: rgba(255,255,255,0.75);
+  text-decoration: underline;
+}
+
+/* Meta action buttons (copy, print, share) */
+.scrolly-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.scrolly-meta-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(243,240,224,0.2);
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(243,240,224,0.55);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  padding: 0;
+}
+.scrolly-meta-action-btn:hover {
+  border-color: var(--scrolly-accent);
+  color: var(--scrolly-accent);
+  background: rgba(211,65,53,0.08);
+}
+.scrolly-meta-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.scrolly-meta-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--scrolly-text-muted);
+  display: inline-block;
+}
+
+@keyframes scrolly-hero-fade-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll cue */
+.scrolly-scroll-cue {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--scrolly-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  animation: scrolly-hero-fade-up 0.9s 0.7s var(--scrolly-ease-out) both;
+  transition: opacity 0.5s ease;
+}
+
+.scrolly-scroll-cue.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scrolly-scroll-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--scrolly-accent);
+  animation: scrolly-bounce 2s 1.8s ease-in-out infinite;
+}
+
+@keyframes scrolly-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(7px); }
+}
+
+
+/* ── 8. SCROLLY SECTION CORE LAYOUT ─────────────────────────────────────── */
+
+.scrolly-section {
+  position: relative;
+  /* overflow: visible (default) — critical for sticky to work */
+}
+
+.scrolly-sticky-figure {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  will-change: contents;
+}
+
+.scrolly-steps-wrapper {
+  position: relative;
+  z-index: 2;
+  margin-top: -100vh;
+  pointer-events: none;
+}
+
+
+/* ── 9. VIDEO ───────────────────────────────────────────────────────────── */
+
+#scrolly-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+/* ── 10. PARALLAX LAYERS ────────────────────────────────────────────────── */
+
+.scrolly-parallax-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Layer 1 — Background haze (warm red/amber, moves slowest) */
+.scrolly-layer-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(211,65,53,0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 80% at 90% 20%, rgba(120,40,20,0.14) 0%, transparent 60%);
+  mix-blend-mode: screen;
+}
+
+/* Layer 2 — Mid texture / vignette (medium speed) */
+.scrolly-layer-mid {
+  background:
+    radial-gradient(ellipse 100% 100% at 50% 50%, transparent 40%, rgba(0,0,0,0.55) 100%),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0px,
+      transparent 40px,
+      rgba(255,255,255,0.015) 40px,
+      rgba(255,255,255,0.015) 41px
+    );
+  opacity: 0.85;
+}
+
+/* Layer 3 — Foreground watermark (largest, fastest + scales) */
+.scrolly-layer-fg {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 0 0 0 0;
+  overflow: hidden;
+  transform-origin: bottom left;
+}
+
+.scrolly-watermark-text {
+  font-family: var(--scrolly-font);
+  font-size: clamp(130px, 20vw, 280px);
+  font-weight: 700;
+  line-height: 0.85;
+  color: rgba(255, 255, 255, 0.035);
+  user-select: none;
+  white-space: nowrap;
+  letter-spacing: -0.04em;
+  -webkit-text-stroke: 1px rgba(255,255,255,0.06);
+  pointer-events: none;
+}
+
+
+/* ── 11. VIDEO OVERLAYS ─────────────────────────────────────────────────── */
+
+.scrolly-video-gradient-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.scrolly-video-gradient-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 55%;
+  background: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 100%);
+  pointer-events: none;
+}
+
+/* Chapter caption pill at bottom-center */
+#scrolly-video-caption {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.72);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 7px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#scrolly-video-caption.is-visible {
+  opacity: 1;
+}
+
+
+/* ── 12. CHAPTER STEPS ──────────────────────────────────────────────────── */
+
+.scrolly-step {
+  min-height: 150vh;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 5% 0 0;
+  pointer-events: none;
+}
+
+.scrolly-step-inner {
+  pointer-events: auto;
+  width: var(--scrolly-step-width);
+  max-width: 90vw;
+  background: rgba(12, 12, 12, 0.82);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  padding: 32px 28px;
+  opacity: 0.25;
+  transform: translateY(22px);
+  transition: opacity 0.7s var(--scrolly-ease-out), transform 0.7s var(--scrolly-ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top accent line */
+.scrolly-step-inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 28px;
+  right: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--scrolly-accent), transparent);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.scrolly-step-inner.is-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scrolly-step-inner.is-active::before {
+  opacity: 0.8;
+}
+
+/* Chapter label */
+.scrolly-step-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--scrolly-accent);
+  margin-bottom: 10px;
+}
+
+/* Chapter heading */
+.scrolly-step-heading {
+  font-family: var(--scrolly-font);
+  font-size: clamp(18px, 2.2vw, 24px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--scrolly-text);
+  margin-bottom: 16px;
+}
+
+/* Chapter body paragraphs */
+.scrolly-step-inner p {
+  font-family: var(--scrolly-font);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--scrolly-text-muted);
+  margin: 0;
+}
+
+.scrolly-step-inner p + p {
+  margin-top: 12px;
+}
+
+
+/* ── 13. CONTENT BREAK SECTION ──────────────────────────────────────────── */
+
+.scrolly-content-breaks {
+  background: #262626;
+}
+
+/* Full-bleed image break using <img> (Rule 1) */
+.scrolly-image-break {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--scrolly-surface);
+}
+
+.scrolly-break-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 5 / 3;
+  object-fit: cover;
+}
+
+.scrolly-break-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px 8vw 28px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.6;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Pull quote — smaller than heading, italics only, ruled borders */
+.scrolly-pullquote {
+  max-width: var(--scrolly-max-text);
+  margin: 0 auto;
+  padding: 48px 6vw;
+  text-align: center;
+  border-top: 1px solid rgba(243,240,224,0.18);
+  border-bottom: 1px solid rgba(243,240,224,0.18);
+}
+
+.scrolly-pullquote-mark {
+  font-family: var(--scrolly-font);
+  font-size: 48px;
+  line-height: 0.8;
+  color: var(--scrolly-accent);
+  opacity: 0.5;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.scrolly-pullquote p {
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: clamp(15px, 1.8vw, 20px); /* smaller than chapter heading */
+  font-weight: 400;  /* no bold — italics only */
+  font-style: italic;
+  line-height: 1.7;
+  color: var(--scrolly-text-dim);
+  margin: 0;
+}
+
+/* Closing text */
+.scrolly-closing-text {
+  max-width: var(--scrolly-max-text);
+  margin: 0 auto;
+  padding: 20px 6vw 80px;
+}
+
+.scrolly-closing-text p {
+  font-family: var(--scrolly-font);
+  font-size: clamp(16px, 1.5vw, 19px);
+  line-height: 1.85;
+  color: var(--scrolly-text-muted);
+  margin: 0;
+}
+
+.scrolly-closing-text p + p {
+  margin-top: 24px;
+}
+
+
+/* ── 13b. PAYWALL ───────────────────────────────────────────────────────── */
+
+/* .scrolly-paywall base is defined below the locked-content block */
+
+.scrolly-paywall-title {
+  font-family: var(--scrolly-font);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--scrolly-text);
+  margin: 0 0 12px 0;
+}
+
+.scrolly-paywall-text {
+  font-family: var(--scrolly-font);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--scrolly-text-muted);
+  margin: 0 0 24px 0;
+}
+
+.scrolly-paywall-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.scrolly-paywall-btn {
+  display: inline-block;
+  background-color: var(--scrolly-accent);
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 999px;
+  font-family: var(--scrolly-font);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.scrolly-paywall-btn:hover {
+  background-color: #b2342a;
+  color: #fff;
+}
+
+.scrolly-paywall-btn-secondary {
+  display: inline-block;
+  background: transparent;
+  color: var(--scrolly-text);
+  border: 2px solid var(--scrolly-text-muted);
+  padding: 12px 28px;
+  border-radius: 999px;
+  font-family: var(--scrolly-font);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.scrolly-paywall-btn-secondary:hover {
+  background: var(--scrolly-text);
+  color: var(--scrolly-bg);
+  border-color: var(--scrolly-text);
+}
+
+/* Locked content — fade + clip + blur when paywall active */
+.scrolly-locked-content {
+  position: relative;
+  max-height: 70vh;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Dark gradient fade at the bottom of locked peek */
+.scrolly-locked-content::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 320px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(10, 10, 10, 0.4) 30%,
+    rgba(10, 10, 10, 0.75) 55%,
+    var(--scrolly-bg) 90%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Frost/blur overlay for extra lock visibility */
+.scrolly-locked-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.25);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Paywall card overlaps the faded content */
+.scrolly-paywall {
+  max-width: 640px;
+  margin: -80px auto 0;
+  background: var(--scrolly-surface);
+  border: 1px solid var(--scrolly-border);
+  border-radius: 28px;
+  padding: 48px 32px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  position: relative;
+  z-index: 5;
+}
+
+/* Unlocked state — reveal all content */
+.scrolly-unlocked .scrolly-locked-content {
+  max-height: none;
+  overflow: visible;
+  pointer-events: auto;
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+.scrolly-unlocked .scrolly-locked-content::after {
+  display: none;
+}
+
+.scrolly-unlocked .scrolly-locked-content::before {
+  display: none;
+}
+
+.scrolly-unlocked .scrolly-paywall {
+  display: none;
+}
+
+
+/* ── 14. END CARD ───────────────────────────────────────────────────────── */
+
+.scrolly-end-card {
+  background: var(--scrolly-surface);
+  border-top: 1px solid var(--scrolly-border);
+  text-align: center;
+  padding: 80px 6vw;
+}
+
+.scrolly-end-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--scrolly-accent);
+  margin-bottom: 16px;
+}
+
+.scrolly-end-title {
+  font-family: var(--scrolly-font);
+  font-size: clamp(24px, 4vw, 40px);
+  font-weight: 700;
+  color: var(--scrolly-text);
+  margin-bottom: 40px;
+}
+
+.scrolly-end-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: var(--scrolly-accent);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background var(--scrolly-transition-s), transform var(--scrolly-transition-s);
+  box-shadow: 0 4px 20px rgba(211,65,53,0.4);
+}
+
+.scrolly-end-btn:hover {
+  background: #b8302a;
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+
+/* ── 15. HEADER OVERRIDES FOR DARK PAGE ─────────────────────────────────── */
+/* The ver3 header is light-themed; on this dark page we need color overrides */
+
+.scrolly-page .site-header {
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--scrolly-border);
+}
+
+.scrolly-page .site-header .nav-link {
+  color: var(--scrolly-text-muted);
+}
+
+.scrolly-page .site-header .nav-link:hover {
+  color: var(--scrolly-text);
+}
+
+.scrolly-page .site-header .btn-subscribe {
+  background: var(--scrolly-accent);
+  color: #fff;
+}
+
+.scrolly-page .site-header .btn-search {
+  color: var(--scrolly-text-muted);
+}
+
+.scrolly-page .site-header .navbar-brand img {
+  filter: brightness(0) invert(1);
+}
+
+.scrolly-page .site-header .navbar-toggler svg {
+  stroke: var(--scrolly-text-muted);
+}
+
+.scrolly-page .site-header .dropdown-menu-custom {
+  background: var(--scrolly-surface);
+  border-color: var(--scrolly-border);
+}
+
+.scrolly-page .site-header .dropdown-item {
+  color: var(--scrolly-text-muted);
+}
+
+.scrolly-page .site-header .dropdown-item:hover {
+  color: var(--scrolly-text);
+  background: var(--scrolly-surface-2);
+}
+
+.scrolly-page .site-header .btn-signin,
+.scrolly-page .site-header .btn-signin-mobile {
+  color: var(--scrolly-text-muted);
+  border-color: var(--scrolly-border);
+}
+
+.scrolly-page .site-header .header-divider {
+  background: var(--scrolly-border);
+}
+
+
+/* ── 16. FOOTER OVERRIDES FOR DARK PAGE ─────────────────────────────────── */
+
+.scrolly-page .site-footer {
+  background: var(--scrolly-bg);
+  border-top: 1px solid var(--scrolly-border);
+  color: var(--scrolly-text-muted);
+}
+
+.scrolly-page .site-footer a {
+  color: var(--scrolly-text-muted);
+}
+
+.scrolly-page .site-footer a:hover {
+  color: var(--scrolly-accent);
+}
+
+.scrolly-page .footer-heading {
+  color: var(--scrolly-text);
+}
+
+.scrolly-page .footer-about {
+  color: var(--scrolly-text-dim);
+}
+
+.scrolly-page .footer-bottom {
+  border-top-color: var(--scrolly-border);
+  color: var(--scrolly-text-dim);
+}
+
+.scrolly-page .footer-email-input {
+  background: var(--scrolly-surface-2);
+  border-color: var(--scrolly-border);
+  color: var(--scrolly-text);
+}
+
+.scrolly-page .footer-email-btn {
+  background: var(--scrolly-accent);
+  color: #fff;
+}
+
+
+/* ── 17. MOBILE & RESPONSIVE ────────────────────────────────────────────── */
+
+/* Laptop / small desktop — prevent title overflowing hero height */
+@media (max-width: 1400px) {
+  .scrolly-hero-title {
+    font-size: clamp(28px, 4.5vw, 60px);
+  }
+  .scrolly-hero-content {
+    gap: 28px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .scrolly-hero-title {
+    font-size: clamp(26px, 4vw, 52px);
+  }
+  .scrolly-hero-content {
+    gap: 20px;
+    padding: 0 6vw 60px;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --scrolly-step-width: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hero — padding-top handled by image margin-top on mobile */
+  .scrolly-hero-content {
+    gap: 28px;
+  }
+
+  /* TOC + Share — same bottom, opposite sides */
+  .scrolly-toc-btn {
+    top: auto;
+    bottom: 28px;
+    right: 16px;
+    transform: none;
+    padding: 10px 16px 10px 12px;
+  }
+
+  .scrolly-toc-btn:hover {
+    transform: scale(1.04);
+  }
+
+  .scrolly-share-btn {
+    right: auto;
+    left: 16px;
+    bottom: 28px;
+  }
+
+  /* TOC drawer becomes bottom sheet */
+  .scrolly-toc-drawer {
+    width: 100%;
+    height: 58vh;
+    max-height: 520px;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border-left: none;
+    border-top: 1px solid var(--scrolly-border);
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%);
+  }
+
+  .scrolly-toc-drawer.is-open {
+    transform: translateY(0);
+  }
+
+  /* Steps — centered, full-width */
+  .scrolly-step {
+    min-height: 120vh;
+    justify-content: center;
+    padding: 0 16px;
+    align-items: flex-end;
+    padding-bottom: 40px;
+  }
+
+  .scrolly-step-inner {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px;
+    padding: 24px 20px;
+  }
+
+  /* Right gradient hidden on mobile */
+  .scrolly-video-gradient-right {
+    display: none;
+  }
+
+  /* End card */
+  .scrolly-end-card {
+    padding: 60px 6vw;
+  }
+
+  /* Paywall */
+  .scrolly-paywall {
+    padding: 32px 20px;
+    margin: -60px 16px 0;
+  }
+
+  .scrolly-locked-content {
+    max-height: 60vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .scrolly-meta-row {
+    gap: 6px 12px;
+    font-size: 11px;
+  }
+
+  .scrolly-step-heading {
+    font-size: 18px;
+  }
+
+  .scrolly-step-inner p {
+    font-size: 13px;
+  }
+}
+
+
+/* ── 18. PREFERS-REDUCED-MOTION ─────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .scrolly-hero-bg          { animation: none; }
+  .scrolly-hero-title,
+  .scrolly-hero-subtitle,
+  .scrolly-meta-row,
+  .scrolly-scroll-cue       { animation: none; }
+  .scrolly-scroll-arrow     { animation: none; }
+
+  .scrolly-parallax-layer {
+    will-change: auto;
+    transform: none !important;
+  }
+
+  .scrolly-step-inner {
+    transition: none;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .scrolly-toc-drawer,
+  .scrolly-toc-overlay { transition: none; }
+
+  .scrolly-progress { transition: none; }
+
+  @keyframes scrolly-hero-breathe { from { transform: scale(1); } to { transform: scale(1); } }
+  @keyframes scrolly-bounce { from {} to {} }
+}
+
+
+/* ── 19. PRINT STYLES ───────────────────────────────────────────────────── */
+
+@media print {
+  .scrolly-progress,
+  .scrolly-toc-btn,
+  .scrolly-share-btn,
+  .scrolly-toc-drawer,
+  .scrolly-toc-overlay,
+  .scrolly-scroll-cue,
+  .scrolly-sticky-figure,
+  .scrolly-steps-wrapper { display: none !important; }
+
+  .scrolly-page { background: #fff; color: #111; }
+  .scrolly-pullquote p { font-size: 22px; }
+
+  .scrolly-paywall { display: none !important; }
+  .scrolly-locked-content {
+    max-height: none !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+  }
+  .scrolly-locked-content::after { display: none !important; }
+}
